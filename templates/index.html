@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Outfit Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding-top: 30px;
+            min-height: 70px;
+            border-bottom: #77aaff 3px solid;
+        }
+        header h1 {
+            text-align: center;
+            text-transform: uppercase;
+            margin: 0;
+            font-size: 24px;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 0 10px #ccc;
+            display: flex;
+            flex-direction: column;
+        }
+        form select,
+        form input[type="file"] {
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        form input[type="submit"] {
+            background: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border: 0;
+            cursor: pointer;
+        }
+        .outfits {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .outfit {
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 0 10px #ccc;
+            text-align: center;
+        }
+        .outfit img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Outfit Generator</h1>
+    </header>
+    <div class="container">
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <select id="category" name="category" required>
+                <option value="">Select Category</option>
+                <option value="1">Tops</option>
+                <option value="2">Bottoms</option>
+                <option value="3">Shoes</option>
+                <!-- Add more categories as needed -->
+            </select>
+            <select id="name" name="name" required>
+                <option value="">Select Name</option>
+            </select>
+            <select id="brand" name="brand" required>
+                <option value="">Select Brand</option>
+            </select>
+            <select id="color" name="color" required>
+                <option value="">Select Color</option>
+            </select>
+            <select id="style" name="style" required>
+                <option value="">Select Style</option>
+            </select>
+            <select id="season" name="season" required>
+                <option value="">Select Season</option>
+                <option value="Summer">Summer</option>
+                <option value="Winter">Winter</option>
+                <option value="Spring">Spring</option>
+                <option value="Fall">Fall</option>
+                <option value="All">All</option>
+            </select>
+            <input type="file" name="photo" required>
+            <input type="submit" value="Upload">
+        </form>
+        <div id="outfits" class="outfits"></div>
+    </div>
+
+    <script>
+        const categoryToNames = {
+            1: ["T-Shirt", "Long Sleeve", "Blouse", "Tank Top"],
+            2: ["Shorts", "Pants", "Skirt", "Jeans"],
+            3: ["Sneakers", "Boots", "Sandals", "Loafers"]
+            // Add more categories and corresponding names as needed
+        };
+
+        const categoryToBrands = {
+            1: ["H&M", "Zara", "Uniqlo", "Nike"],
+            2: ["Levi's", "Gap", "Adidas", "Under Armour"],
+            3: ["Nike", "Adidas", "Puma", "Reebok"]
+            // Add more categories and corresponding brands as needed
+        };
+
+        const colors = ["Red", "Blue", "Green", "Black", "White", "Yellow", "Pink", "Purple", "Orange", "Brown", "Gray"];
+        const styles = ["Casual", "Formal", "Sport", "Party", "Business"];
+
+        document.getElementById('category').addEventListener('change', function() {
+            const categoryId = this.value;
+            updateOptions('name', categoryToNames[categoryId] || []);
+            updateOptions('brand', categoryToBrands[categoryId] || []);
+        });
+
+        function updateOptions(selectId, options) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Select ' + selectId.charAt(0).toUpperCase() + selectId.slice(1) + '</option>';
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.innerHTML = option;
+                select.appendChild(opt);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateOptions('color', colors);
+            updateOptions('style', styles);
+            fetchOutfits();
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    alert('Image uploaded successfully!');
+                    fetchOutfits();
+                } else {
+                    alert('Failed to upload image.');
+                }
+            });
+        });
+
+        function fetchOutfits() {
+            fetch('/outfits')
+                .then(response => response.json())
+                .then(data => {
+                    const outfitsDiv = document.getElementById('outfits');
+                    outfitsDiv.innerHTML = '';
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'outfit';
+                        const img = document.createElement('img');
+                        img.src = item.image_url;
+                        img.alt = item.name;
+                        div.appendChild(img);
+                        const text = document.createElement('p');
+                        text.textContent = `${item.name} - ${item.color} - ${item.brand}`;
+                        div.appendChild(text);
+                        outfitsDiv.appendChild(div);
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
