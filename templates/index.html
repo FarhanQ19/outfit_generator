@@ -13,16 +13,18 @@
             width: 80%;
             margin: auto;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         header {
             background: #333;
             color: #fff;
-            padding-top: 30px;
-            min-height: 70px;
-            border-bottom: #77aaff 3px solid;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
         }
         header h1 {
-            text-align: center;
             text-transform: uppercase;
             margin: 0;
             font-size: 24px;
@@ -34,18 +36,22 @@
             box-shadow: 0 0 10px #ccc;
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
         form select,
         form input[type="file"] {
             margin-bottom: 10px;
             padding: 10px;
             font-size: 16px;
+            width: 100%;
+            max-width: 300px;
         }
         form input[type="submit"] {
-            background: #333;
-            color: #fff;
             padding: 10px 20px;
-            border: 0;
+            font-size: 16px;
+            background-color: #333;
+            color: #fff;
+            border: none;
             cursor: pointer;
         }
         .outfits {
@@ -76,6 +82,9 @@
                 <option value="1">Tops</option>
                 <option value="2">Bottoms</option>
                 <option value="3">Shoes</option>
+                <option value="4">Hats</option>
+                <option value="5">Bags</option>
+                <option value="6">Accessories</option>
                 <!-- Add more categories as needed -->
             </select>
             <select id="name" name="name" required>
@@ -86,6 +95,10 @@
             </select>
             <select id="color" name="color" required>
                 <option value="">Select Color</option>
+            </select>
+            <select id="secondaryColor" name="secondaryColor">
+                <option value="">No Secondary Color</option>
+                <!-- Options for secondary color will be populated dynamically -->
             </select>
             <select id="style" name="style" required>
                 <option value="">Select Style</option>
@@ -108,14 +121,20 @@
         const categoryToNames = {
             1: ["T-Shirt", "Long Sleeve", "Blouse", "Tank Top"],
             2: ["Shorts", "Pants", "Skirt", "Jeans"],
-            3: ["Sneakers", "Boots", "Sandals", "Loafers"]
+            3: ["Sneakers", "Boots", "Sandals", "Loafers"],
+            4: ["Cap", "Beanie", "Fedora", "Hat"],
+            5: ["Handbag", "Backpack", "Tote", "Clutch"],
+            6: ["Watch", "Necklace", "Bracelet", "Earrings"]
             // Add more categories and corresponding names as needed
         };
 
         const categoryToBrands = {
             1: ["H&M", "Zara", "Uniqlo", "Nike"],
             2: ["Levi's", "Gap", "Adidas", "Under Armour"],
-            3: ["Nike", "Adidas", "Puma", "Reebok"]
+            3: ["Nike", "Adidas", "Puma", "Reebok"],
+            4: ["New Era", "Nike", "Adidas", "Puma"],
+            5: ["Gucci", "Prada", "Louis Vuitton", "Chanel"],
+            6: ["Rolex", "Tiffany", "Cartier", "Pandora"]
             // Add more categories and corresponding brands as needed
         };
 
@@ -141,6 +160,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             updateOptions('color', colors);
+            updateOptions('secondaryColor', colors.concat(['No Secondary Color']));
             updateOptions('style', styles);
             fetchOutfits();
         });
@@ -177,7 +197,7 @@
                         img.alt = item.name;
                         div.appendChild(img);
                         const text = document.createElement('p');
-                        text.textContent = `${item.name} - ${item.color} - ${item.brand}`;
+                        text.textContent = `${item.name} - ${item.color} - ${item.secondary_color || 'No Secondary Color'} - ${item.brand}`;
                         div.appendChild(text);
                         outfitsDiv.appendChild(div);
                     });

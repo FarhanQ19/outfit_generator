@@ -13,8 +13,9 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    brand = db.Column(db.String(80))  # Added brand field
+    brand = db.Column(db.String(80))
     color = db.Column(db.String(80))
+    secondary_color = db.Column(db.String(80))
     style = db.Column(db.String(80))
     season = db.Column(db.String(80))
     image_url = db.Column(db.String(200))

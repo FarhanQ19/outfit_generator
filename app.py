@@ -13,6 +13,10 @@ db.init_app(app)
 def index():
     return render_template('index.html')
 
+@app.route('/generator')
+def generator():
+    return render_template('generator.html')
+
 @app.route('/outfits', methods=['GET'])
 def get_outfits():
     items = Item.query.all()
@@ -22,6 +26,7 @@ def get_outfits():
         'category': item.category_id,
         'brand': item.brand,
         'color': item.color,
+        'secondary_color': item.secondary_color,
         'style': item.style,
         'season': item.season,
         'image_url': item.image_url
@@ -32,9 +37,15 @@ def add_sample_data():
     tops = Category(name="Tops")
     bottoms = Category(name="Bottoms")
     shoes = Category(name="Shoes")
+    hats = Category(name="Hats")
+    bags = Category(name="Bags")
+    accessories = Category(name="Accessories")
     db.session.add(tops)
     db.session.add(bottoms)
     db.session.add(shoes)
+    db.session.add(hats)
+    db.session.add(bags)
+    db.session.add(accessories)
     db.session.commit()
 
     return "Sample data added!"
@@ -50,6 +61,9 @@ def upload():
     name = request.form.get('name')
     brand = request.form.get('brand')
     color = request.form.get('color')
+    secondary_color = request.form.get('secondaryColor')
+    if secondary_color == 'No Secondary Color':
+        secondary_color = None
     style = request.form.get('style')
     season = request.form.get('season')
     category_id = request.form.get('category')
@@ -60,7 +74,7 @@ def upload():
         file.save(filepath)
         image_url = f"/static/images/{filename}"
 
-        new_item = Item(name=name, brand=brand, color=color, style=style, season=season, category_id=category_id, image_url=image_url)
+        new_item = Item(name=name, brand=brand, color=color, secondary_color=secondary_color, style=style, season=season, category_id=category_id, image_url=image_url)
         db.session.add(new_item)
         db.session.commit()
 
@@ -76,6 +90,7 @@ def view_items():
         'category': item.category_id,
         'brand': item.brand,
         'color': item.color,
+        'secondary_color': item.secondary_color,
         'style': item.style,
         'season': item.season,
         'image_url': item.image_url

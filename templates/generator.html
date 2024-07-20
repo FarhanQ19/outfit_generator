@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Outfit Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+        }
+        header h1 {
+            text-transform: uppercase;
+            margin: 0;
+            font-size: 24px;
+        }
+        .outfit-display {
+            position: relative;
+            width: 200px;  /* Adjust width as needed */
+            height: 400px; /* Adjust height as needed */
+            margin-bottom: 20px;
+        }
+        .outfit-display img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+        }
+        .bag-display img {
+            position: absolute;
+            top: 50px; /* Adjust position as needed */
+            right: -50px; /* Adjust position as needed */
+            width: 100px; /* Adjust size as needed */
+            height: auto;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Outfit Generator</h1>
+    </header>
+    <div class="container">
+        <div class="outfit-display" id="outfitDisplay">
+            <!-- Images will be placed here by JavaScript -->
+        </div>
+        <button onclick="randomizeOutfit()">Randomize</button>
+    </div>
+
+    <script>
+        const outfits = [];
+
+        fetch('/outfits')
+            .then(response => response.json())
+            .then(data => {
+                outfits.push(...data);
+                randomizeOutfit(); // Initial outfit display
+            });
+
+        function randomizeOutfit() {
+            const outfitDisplay = document.getElementById('outfitDisplay');
+            outfitDisplay.innerHTML = '';
+
+            const season = 'Summer'; // Example rule: only summer outfits
+            const tops = outfits.filter(item => item.category === 1 && item.season === season);
+            const bottoms = outfits.filter(item => item.category === 2 && item.season === season);
+            const shoes = outfits.filter(item => item.category === 3 && item.season === season);
+            const hats = outfits.filter(item => item.category === 4 && item.season === season);
+            const bags = outfits.filter(item => item.category === 5 && item.season === season);
+            const accessories = outfits.filter(item => item.category === 6 && item.season === season);
+
+            const selectedTop = tops[Math.floor(Math.random() * tops.length)];
+            const selectedBottom = bottoms[Math.floor(Math.random() * bottoms.length)];
+            const selectedShoes = shoes[Math.floor(Math.random() * shoes.length)];
+            const selectedHat = hats[Math.floor(Math.random() * hats.length)];
+            const selectedBag = bags[Math.floor(Math.random() * bags.length)];
+            const selectedAccessory = accessories[Math.floor(Math.random() * accessories.length)];
+
+            if (selectedTop) {
+                const topImg = document.createElement('img');
+                topImg.src = selectedTop.image_url;
+                topImg.alt = selectedTop.name;
+                outfitDisplay.appendChild(topImg);
+            }
+
+            if (selectedBottom) {
+                const bottomImg = document.createElement('img');
+                bottomImg.src = selectedBottom.image_url;
+                bottomImg.alt = selectedBottom.name;
+                outfitDisplay.appendChild(bottomImg);
+            }
+
+            if (selectedShoes) {
+                const shoesImg = document.createElement('img');
+                shoesImg.src = selectedShoes.image_url;
+                shoesImg.alt = selectedShoes.name;
+                outfitDisplay.appendChild(shoesImg);
+            }
+
+            if (selectedHat) {
+                const hatImg = document.createElement('img');
+                hatImg.src = selectedHat.image_url;
+                hatImg.alt = selectedHat.name;
+                outfitDisplay.appendChild(hatImg);
+            }
+
+            if (selectedBag) {
+                const bagDiv = document.createElement('div');
+                bagDiv.className = 'bag-display';
+                const bagImg = document.createElement('img');
+                bagImg.src = selectedBag.image_url;
+                bagImg.alt = selectedBag.name;
+                bagDiv.appendChild(bagImg);
+                outfitDisplay.appendChild(bagDiv);
+            }
+
+            if (selectedAccessory) {
+                const accessoryImg = document.createElement('img');
+                accessoryImg.src = selectedAccessory.image_url;
+                accessoryImg.alt = selectedAccessory.name;
+                outfitDisplay.appendChild(accessoryImg);
+            }
+        }
+    </script>
+</body>
+</html>
