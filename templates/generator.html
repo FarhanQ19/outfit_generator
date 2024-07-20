@@ -35,22 +35,36 @@
         .outfit-display {
             position: relative;
             width: 200px;  /* Adjust width as needed */
-            height: 400px; /* Adjust height as needed */
+            height: 600px; /* Adjust height as needed */
             margin-bottom: 20px;
         }
         .outfit-display img {
             position: absolute;
-            top: 0;
             left: 0;
             width: 100%;
             height: auto;
         }
+        .top {
+            top: 0;
+        }
+        .bottom {
+            top: 150px; /* Adjust based on the height of the top image */
+        }
+        .shoes {
+            top: 300px; /* Adjust based on the height of the bottom image */
+        }
+        .hat {
+            top: -50px; /* Adjust based on desired position */
+        }
         .bag-display img {
             position: absolute;
-            top: 50px; /* Adjust position as needed */
+            top: 100px; /* Adjust position as needed */
             right: -50px; /* Adjust position as needed */
             width: 100px; /* Adjust size as needed */
             height: auto;
+        }
+        .accessory {
+            top: 350px; /* Adjust based on desired position */
         }
         button {
             padding: 10px 20px;
@@ -80,6 +94,7 @@
             .then(response => response.json())
             .then(data => {
                 outfits.push(...data);
+                console.log('Fetched outfits:', outfits);
                 randomizeOutfit(); // Initial outfit display
             });
 
@@ -88,12 +103,19 @@
             outfitDisplay.innerHTML = '';
 
             const season = 'Summer'; // Example rule: only summer outfits
-            const tops = outfits.filter(item => item.category === 1 && item.season === season);
-            const bottoms = outfits.filter(item => item.category === 2 && item.season === season);
-            const shoes = outfits.filter(item => item.category === 3 && item.season === season);
-            const hats = outfits.filter(item => item.category === 4 && item.season === season);
-            const bags = outfits.filter(item => item.category === 5 && item.season === season);
-            const accessories = outfits.filter(item => item.category === 6 && item.season === season);
+            const tops = outfits.filter(item => item.category === 1);
+            const bottoms = outfits.filter(item => item.category === 2);
+            const shoes = outfits.filter(item => item.category === 3);
+            const hats = outfits.filter(item => item.category === 4);
+            const bags = outfits.filter(item => item.category === 5);
+            const accessories = outfits.filter(item => item.category === 6);
+
+            console.log('Filtered tops:', tops);
+            console.log('Filtered bottoms:', bottoms);
+            console.log('Filtered shoes:', shoes);
+            console.log('Filtered hats:', hats);
+            console.log('Filtered bags:', bags);
+            console.log('Filtered accessories:', accessories);
 
             const selectedTop = tops[Math.floor(Math.random() * tops.length)];
             const selectedBottom = bottoms[Math.floor(Math.random() * bottoms.length)];
@@ -106,6 +128,7 @@
                 const topImg = document.createElement('img');
                 topImg.src = selectedTop.image_url;
                 topImg.alt = selectedTop.name;
+                topImg.className = 'top';
                 outfitDisplay.appendChild(topImg);
             }
 
@@ -113,6 +136,7 @@
                 const bottomImg = document.createElement('img');
                 bottomImg.src = selectedBottom.image_url;
                 bottomImg.alt = selectedBottom.name;
+                bottomImg.className = 'bottom';
                 outfitDisplay.appendChild(bottomImg);
             }
 
@@ -120,6 +144,7 @@
                 const shoesImg = document.createElement('img');
                 shoesImg.src = selectedShoes.image_url;
                 shoesImg.alt = selectedShoes.name;
+                shoesImg.className = 'shoes';
                 outfitDisplay.appendChild(shoesImg);
             }
 
@@ -127,6 +152,7 @@
                 const hatImg = document.createElement('img');
                 hatImg.src = selectedHat.image_url;
                 hatImg.alt = selectedHat.name;
+                hatImg.className = 'hat';
                 outfitDisplay.appendChild(hatImg);
             }
 
@@ -144,6 +170,7 @@
                 const accessoryImg = document.createElement('img');
                 accessoryImg.src = selectedAccessory.image_url;
                 accessoryImg.alt = selectedAccessory.name;
+                accessoryImg.className = 'accessory';
                 outfitDisplay.appendChild(accessoryImg);
             }
         }
