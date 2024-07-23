@@ -26,11 +26,28 @@
             padding: 20px;
             text-align: center;
             width: 100%;
+            position: relative;
         }
         header h1 {
             text-transform: uppercase;
             margin: 0;
             font-size: 24px;
+        }
+        .nav-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .nav-buttons a {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #fff;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            border: 1px solid #333;
         }
         .outfit-display {
             position: relative;
@@ -47,11 +64,14 @@
         .top {
             top: 0;
         }
+        .jacket {
+            top: 100px; /* Adjust based on the height of the top image */
+        }
         .bottom {
-            top: 150px; /* Adjust based on the height of the top image */
+            top: 250px; /* Adjust based on the height of the jacket image */
         }
         .shoes {
-            top: 300px; /* Adjust based on the height of the bottom image */
+            top: 400px; /* Adjust based on the height of the bottom image */
         }
         .hat {
             top: -50px; /* Adjust based on desired position */
@@ -79,6 +99,9 @@
 <body>
     <header>
         <h1>Outfit Generator</h1>
+        <div class="nav-buttons">
+            <a href="/">Back to Main Page</a>
+        </div>
     </header>
     <div class="container">
         <div class="outfit-display" id="outfitDisplay">
@@ -109,6 +132,7 @@
             const hats = outfits.filter(item => item.category === 4);
             const bags = outfits.filter(item => item.category === 5);
             const accessories = outfits.filter(item => item.category === 6);
+            const jackets = outfits.filter(item => item.category === 7);
 
             console.log('Filtered tops:', tops);
             console.log('Filtered bottoms:', bottoms);
@@ -116,8 +140,10 @@
             console.log('Filtered hats:', hats);
             console.log('Filtered bags:', bags);
             console.log('Filtered accessories:', accessories);
+            console.log('Filtered jackets:', jackets);
 
             const selectedTop = tops[Math.floor(Math.random() * tops.length)];
+            const selectedJacket = jackets[Math.floor(Math.random() * jackets.length)];
             const selectedBottom = bottoms[Math.floor(Math.random() * bottoms.length)];
             const selectedShoes = shoes[Math.floor(Math.random() * shoes.length)];
             const selectedHat = hats[Math.floor(Math.random() * hats.length)];
@@ -130,6 +156,14 @@
                 topImg.alt = selectedTop.name;
                 topImg.className = 'top';
                 outfitDisplay.appendChild(topImg);
+            }
+
+            if (selectedJacket) {
+                const jacketImg = document.createElement('img');
+                jacketImg.src = selectedJacket.image_url;
+                jacketImg.alt = selectedJacket.name;
+                jacketImg.className = 'jacket';
+                outfitDisplay.appendChild(jacketImg);
             }
 
             if (selectedBottom) {

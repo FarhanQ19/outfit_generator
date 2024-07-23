@@ -40,12 +40,14 @@ def add_sample_data():
     hats = Category(name="Hats")
     bags = Category(name="Bags")
     accessories = Category(name="Accessories")
+    jackets = Category(name="Jackets")
     db.session.add(tops)
     db.session.add(bottoms)
     db.session.add(shoes)
     db.session.add(hats)
     db.session.add(bags)
     db.session.add(accessories)
+    db.session.add(jackets)
     db.session.commit()
 
     return "Sample data added!"
@@ -81,6 +83,44 @@ def upload():
         return jsonify({'image_url': image_url})
     return "Failed to upload", 400
 
+@app.route('/delete_item/<int:item_id>', methods=['DELETE'])
+def delete_item(item_id):
+    item = Item.query.get(item_id)
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+        return jsonify({'message': 'Item deleted successfully'})
+    return jsonify({'message': 'Item not found'}), 404
+
+@app.route('/edit_item/<int:item_id>', methods=['POST'])
+def edit_item(item_id):
+    item = Item.query.get(item_id)
+    if not item:
+        return jsonify({'message': 'Item not found'}), 404
+
+    name = request.form.get('name')
+    brand = request.form.get('brand')
+    color = request.form.get('color')
+    secondary_color = request.form.get('secondaryColor')
+    if secondary_color == 'No Secondary Color':
+        secondary_color = None
+    style = request.form.get('style')
+    season = request.form.get('season')
+    category_id = request.form.get('category')
+
+    if name and brand and color and style and season and category_id:
+        item.name = name
+        item.brand = brand
+        item.color = color
+        item.secondary_color = secondary_color
+        item.style = style
+        item.season = season
+        item.category_id = category_id
+
+        db.session.commit()
+        return jsonify({'message': 'Item updated successfully'})
+    return jsonify({'message': 'Failed to update item'}), 400
+
 @app.route('/view_items', methods=['GET'])
 def view_items():
     items = Item.query.all()
@@ -100,3 +140,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+
