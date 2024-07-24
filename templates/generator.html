@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Outfit Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,66 +27,45 @@
             padding: 20px;
             text-align: center;
             width: 100%;
-            position: relative;
         }
         header h1 {
             text-transform: uppercase;
             margin: 0;
             font-size: 24px;
         }
-        .nav-buttons {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+        .filter-container {
+            margin: 20px 0;
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        .nav-buttons a {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #fff;
-            color: #333;
-            text-decoration: none;
-            border-radius: 5px;
-            border: 1px solid #333;
+        .filter-container label {
+            margin-right: 10px;
+        }
+        .select2-container--default .select2-selection--multiple {
+            width: 200px; /* Adjust width as needed */
+        }
+        .select2-dropdown {
+            width: 200px !important; /* Ensure the dropdown matches the select element width */
         }
         .outfit-display {
             position: relative;
-            width: 200px;  /* Adjust width as needed */
-            height: 600px; /* Adjust height as needed */
+            width: 400px;
+            height: 600px;
             margin-bottom: 20px;
         }
         .outfit-display img {
             position: absolute;
-            left: 0;
-            width: 100%;
+            width: 150px;
             height: auto;
         }
-        .top {
-            top: 0;
-        }
-        .jacket {
-            top: 100px; /* Adjust based on the height of the top image */
-        }
-        .bottom {
-            top: 250px; /* Adjust based on the height of the jacket image */
-        }
-        .shoes {
-            top: 400px; /* Adjust based on the height of the bottom image */
-        }
-        .hat {
-            top: -50px; /* Adjust based on desired position */
-        }
-        .bag-display img {
-            position: absolute;
-            top: 100px; /* Adjust position as needed */
-            right: -50px; /* Adjust position as needed */
-            width: 100px; /* Adjust size as needed */
-            height: auto;
-        }
-        .accessory {
-            top: 350px; /* Adjust based on desired position */
-        }
+        .hat { top: 0; left: calc(50% - 75px); }
+        .bag { top: 150px; left: 0; }
+        .accessory { top: 250px; left: 0; }
+        .top { top: 150px; left: calc(50% - 75px); }
+        .jacket { top: 150px; left: calc(100% - 100px); }
+        .bottom { top: 300px; left: calc(50% - 75px); }
+        .shoes { top: 525px; left: calc(50% - 75px); }
         button {
             padding: 10px 20px;
             font-size: 16px;
@@ -93,6 +73,19 @@
             color: #fff;
             border: none;
             cursor: pointer;
+            margin-top: 20px;
+        }
+        .lock-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .lock-container label {
+            display: flex;
+            align-items: center;
+        }
+        .lock-container input[type="checkbox"] {
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -104,13 +97,57 @@
         </div>
     </header>
     <div class="container">
+        <div class="filter-container">
+            <label for="season">Season:</label>
+            <select id="season">
+                <option value="any">Any</option>
+                <option value="summer">Summer</option>
+                <option value="winter">Winter</option>
+                <option value="rain">Rain</option>
+            </select>
+            <label for="color">Color:</label>
+            <select id="color" multiple="multiple">
+                <option value="red">Red</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="yellow">Yellow</option>
+                <option value="purple">Purple</option>
+                <option value="orange">Orange</option>
+                <option value="pink">Pink</option>
+                <option value="brown">Brown</option>
+                <option value="black">Black</option>
+                <option value="white">White</option>
+                <option value="gray">Gray</option>
+                <option value="beige">Beige</option>
+                <option value="navy">Navy</option>
+            </select>
+        </div>
         <div class="outfit-display" id="outfitDisplay">
             <!-- Images will be placed here by JavaScript -->
         </div>
         <button onclick="randomizeOutfit()">Randomize</button>
+        <div class="lock-container">
+            <label><input type="checkbox" id="lockHat">Lock Hat</label>
+            <label><input type="checkbox" id="lockTop">Lock Top</label>
+            <label><input type="checkbox" id="lockJacket">Lock Jacket</label>
+            <label><input type="checkbox" id="lockBottom">Lock Bottom</label>
+            <label><input type="checkbox" id="lockShoes">Lock Shoes</label>
+            <label><input type="checkbox" id="lockBag">Lock Bag</label>
+            <label><input type="checkbox" id="lockAccessory">Lock Accessory</label>
+        </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script>
+        $(document).ready(function() {
+            $('#color').select2({
+                placeholder: "Select colors",
+                closeOnSelect: false,
+                width: 'resolve'
+            });
+        });
+
         const outfits = [];
 
         fetch('/outfits')
@@ -121,18 +158,38 @@
                 randomizeOutfit(); // Initial outfit display
             });
 
+        let selectedTop = null;
+        let selectedJacket = null;
+        let selectedBottom = null;
+        let selectedShoes = null;
+        let selectedHat = null;
+        let selectedBag = null;
+        let selectedAccessory = null;
+
+        function getSelectedValues(selectElement) {
+            return $(selectElement).val();
+        }
+
         function randomizeOutfit() {
             const outfitDisplay = document.getElementById('outfitDisplay');
             outfitDisplay.innerHTML = '';
 
-            const season = 'Summer'; // Example rule: only summer outfits
-            const tops = outfits.filter(item => item.category === 1);
-            const bottoms = outfits.filter(item => item.category === 2);
-            const shoes = outfits.filter(item => item.category === 3);
-            const hats = outfits.filter(item => item.category === 4);
-            const bags = outfits.filter(item => item.category === 5);
-            const accessories = outfits.filter(item => item.category === 6);
-            const jackets = outfits.filter(item => item.category === 7);
+            const season = document.getElementById('season').value;
+            const colors = getSelectedValues('#color');
+
+            const filterItems = (items, category) => items.filter(item =>
+                item.category === category &&
+                (season === 'any' || item.season.toLowerCase() === season) &&
+                (colors.length === 0 || colors.includes(item.color.toLowerCase()) || (item.secondary_color && colors.includes(item.secondary_color.toLowerCase())))
+            );
+
+            const tops = filterItems(outfits, 1);
+            const bottoms = filterItems(outfits, 2);
+            const shoes = filterItems(outfits, 3);
+            const hats = filterItems(outfits, 4);
+            const bags = filterItems(outfits, 5);
+            const accessories = filterItems(outfits, 6);
+            const jackets = filterItems(outfits, 7);
 
             console.log('Filtered tops:', tops);
             console.log('Filtered bottoms:', bottoms);
@@ -142,13 +199,35 @@
             console.log('Filtered accessories:', accessories);
             console.log('Filtered jackets:', jackets);
 
-            const selectedTop = tops[Math.floor(Math.random() * tops.length)];
-            const selectedJacket = jackets[Math.floor(Math.random() * jackets.length)];
-            const selectedBottom = bottoms[Math.floor(Math.random() * bottoms.length)];
-            const selectedShoes = shoes[Math.floor(Math.random() * shoes.length)];
-            const selectedHat = hats[Math.floor(Math.random() * hats.length)];
-            const selectedBag = bags[Math.floor(Math.random() * bags.length)];
-            const selectedAccessory = accessories[Math.floor(Math.random() * accessories.length)];
+            if (!document.getElementById('lockTop').checked) {
+                selectedTop = tops[Math.floor(Math.random() * tops.length)];
+            }
+            if (!document.getElementById('lockJacket').checked) {
+                selectedJacket = jackets[Math.floor(Math.random() * jackets.length)];
+            }
+            if (!document.getElementById('lockBottom').checked) {
+                selectedBottom = bottoms[Math.floor(Math.random() * bottoms.length)];
+            }
+            if (!document.getElementById('lockShoes').checked) {
+                selectedShoes = shoes[Math.floor(Math.random() * shoes.length)];
+            }
+            if (!document.getElementById('lockHat').checked) {
+                selectedHat = hats[Math.floor(Math.random() * hats.length)];
+            }
+            if (!document.getElementById('lockBag').checked) {
+                selectedBag = bags[Math.floor(Math.random() * bags.length)];
+            }
+            if (!document.getElementById('lockAccessory').checked) {
+                selectedAccessory = accessories[Math.floor(Math.random() * accessories.length)];
+            }
+
+            if (selectedHat) {
+                const hatImg = document.createElement('img');
+                hatImg.src = selectedHat.image_url;
+                hatImg.alt = selectedHat.name;
+                hatImg.className = 'hat';
+                outfitDisplay.appendChild(hatImg);
+            }
 
             if (selectedTop) {
                 const topImg = document.createElement('img');
@@ -182,22 +261,12 @@
                 outfitDisplay.appendChild(shoesImg);
             }
 
-            if (selectedHat) {
-                const hatImg = document.createElement('img');
-                hatImg.src = selectedHat.image_url;
-                hatImg.alt = selectedHat.name;
-                hatImg.className = 'hat';
-                outfitDisplay.appendChild(hatImg);
-            }
-
             if (selectedBag) {
-                const bagDiv = document.createElement('div');
-                bagDiv.className = 'bag-display';
                 const bagImg = document.createElement('img');
                 bagImg.src = selectedBag.image_url;
                 bagImg.alt = selectedBag.name;
-                bagDiv.appendChild(bagImg);
-                outfitDisplay.appendChild(bagDiv);
+                bagImg.className = 'bag';
+                outfitDisplay.appendChild(bagImg);
             }
 
             if (selectedAccessory) {
