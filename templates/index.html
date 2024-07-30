@@ -156,6 +156,7 @@
         <div class="nav-buttons">
             <a href="/generator">Go to Outfit Generator</a>
             <a href="/view_items">View All Items</a>
+            <a href="/saved_outfits">Saved Outfits</a>
         </div>
     </header>
     <div class="container">
@@ -181,7 +182,9 @@
             </select>
             <select id="secondaryColor" name="secondaryColor">
                 <option value="">No Secondary Color</option>
-                <!-- Options for secondary color will be populated dynamically -->
+            </select>
+            <select id="tertiaryColor" name="tertiaryColor">
+                <option value="">No Tertiary Color</option>
             </select>
             <select id="style" name="style" required>
                 <option value="">Select Style</option>
@@ -225,6 +228,9 @@
                 </select>
                 <select id="editSecondaryColor" name="secondaryColor">
                     <option value="">No Secondary Color</option>
+                </select>
+                <select id="editTertiaryColor" name="tertiaryColor">
+                    <option value="">No Tertiary Color</option>
                 </select>
                 <select id="editStyle" name="style" required>
                     <option value="">Select Style</option>
@@ -286,6 +292,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateOptions('color', colors);
             updateOptions('secondaryColor', colors.concat(['No Secondary Color']));
+            updateOptions('tertiaryColor', colors.concat(['No Tertiary Color']));
             updateOptions('style', styles);
             fetchOutfits();
         });
@@ -323,7 +330,7 @@
                         img.alt = item.name;
                         div.appendChild(img);
                         const text = document.createElement('p');
-                        text.textContent = `${item.name} - ${item.color} - ${item.secondary_color || 'No Secondary Color'} - ${item.brand}`;
+                        text.textContent = `${item.name} - ${item.color} - ${item.secondary_color || 'No Secondary Color'} - ${item.tertiary_color || 'No Tertiary Color'} - ${item.brand}`;
                         div.appendChild(text);
                         const buttonsDiv = document.createElement('div');
                         buttonsDiv.className = 'outfit-buttons';
@@ -361,12 +368,14 @@
             updateOptions('editBrand', categoryToBrands[item.category] || []);
             updateOptions('editColor', colors);
             updateOptions('editSecondaryColor', colors.concat(['No Secondary Color']));
+            updateOptions('editTertiaryColor', colors.concat(['No Tertiary Color']));
             updateOptions('editStyle', styles);
 
             document.getElementById('editName').value = item.name;
             document.getElementById('editBrand').value = item.brand;
             document.getElementById('editColor').value = item.color;
             document.getElementById('editSecondaryColor').value = item.secondary_color || 'No Secondary Color';
+            document.getElementById('editTertiaryColor').value = item.tertiary_color || 'No Tertiary Color';
             document.getElementById('editStyle').value = item.style;
             document.getElementById('editSeason').value = item.season;
 

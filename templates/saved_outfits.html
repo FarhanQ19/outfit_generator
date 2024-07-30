@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Saved Outfits</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            position: relative;
+        }
+        header h1 {
+            text-transform: uppercase;
+            margin: 0;
+            font-size: 24px;
+        }
+        .nav-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .nav-buttons a {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #fff;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+        .outfits {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .outfit {
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 0 10px #ccc;
+            text-align: center;
+        }
+        .outfit img {
+            max-width: 100%;
+            height: auto;
+        }
+        .outfit-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .outfit-buttons button {
+            padding: 5px 10px;
+            font-size: 14px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Saved Outfits</h1>
+        <div class="nav-buttons">
+            <a href="/">Back to Main Page</a>
+            <a href="/generator">Go to Outfit Generator</a>
+        </div>
+    </header>
+    <div class="container">
+        <div id="savedOutfits" class="outfits"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchSavedOutfits();
+        });
+
+        function fetchSavedOutfits() {
+            fetch('/get_saved_outfits')
+                .then(response => response.json())
+                .then(data => {
+                    const savedOutfitsDiv = document.getElementById('savedOutfits');
+                    savedOutfitsDiv.innerHTML = '';
+                    data.forEach(outfit => {
+                        const div = document.createElement('div');
+                        div.className = 'outfit';
+                        if (outfit.hat) {
+                            const img = document.createElement('img');
+                            img.src = outfit.hat;
+                            img.alt = 'Hat';
+                            div.appendChild(img);
+                        }
+                        if (outfit.top) {
+                            const img = document.createElement('img');
+                            img.src = outfit.top;
+                            img.alt = 'Top';
+                            div.appendChild(img);
+                        }
+                        if (outfit.jacket) {
+                            const img = document.createElement('img');
+                            img.src = outfit.jacket;
+                            img.alt = 'Jacket';
+                            div.appendChild(img);
+                        }
+                        if (outfit.bottom) {
+                            const img = document.createElement('img');
+                            img.src = outfit.bottom;
+                            img.alt = 'Bottom';
+                            div.appendChild(img);
+                        }
+                        if (outfit.shoes) {
+                            const img = document.createElement('img');
+                            img.src = outfit.shoes;
+                            img.alt = 'Shoes';
+                            div.appendChild(img);
+                        }
+                        if (outfit.bag) {
+                            const img = document.createElement('img');
+                            img.src = outfit.bag;
+                            img.alt = 'Bag';
+                            div.appendChild(img);
+                        }
+                        if (outfit.accessory) {
+                            const img = document.createElement('img');
+                            img.src = outfit.accessory;
+                            img.alt = 'Accessory';
+                            div.appendChild(img);
+                        }
+                        const buttonsDiv = document.createElement('div');
+                        buttonsDiv.className = 'outfit-buttons';
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = () => deleteSavedOutfit(outfit.id);
+                        buttonsDiv.appendChild(deleteButton);
+                        div.appendChild(buttonsDiv);
+                        savedOutfitsDiv.appendChild(div);
+                    });
+                });
+        }
+
+        function deleteSavedOutfit(outfitId) {
+            fetch(`/delete_saved_outfit/${outfitId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === 'Saved outfit deleted successfully') {
+                    fetchSavedOutfits();
+                } else {
+                    alert('Failed to delete saved outfit.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+

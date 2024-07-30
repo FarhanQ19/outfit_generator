@@ -94,6 +94,7 @@
         <h1>Outfit Generator</h1>
         <div class="nav-buttons">
             <a href="/">Back to Main Page</a>
+            <a href="/saved_outfits">Saved Outfits</a>
         </div>
     </header>
     <div class="container">
@@ -126,6 +127,7 @@
             <!-- Images will be placed here by JavaScript -->
         </div>
         <button onclick="randomizeOutfit()">Randomize</button>
+        <button onclick="saveOutfit()">Save Outfit</button>
         <div class="lock-container">
             <label><input type="checkbox" id="lockHat">Lock Hat</label>
             <label><input type="checkbox" id="lockTop">Lock Top</label>
@@ -149,6 +151,7 @@
         });
 
         const outfits = [];
+        let selectedOutfit = {};
 
         fetch('/outfits')
             .then(response => response.json())
@@ -180,7 +183,7 @@
             const filterItems = (items, category) => items.filter(item =>
                 item.category === category &&
                 (season === 'any' || item.season.toLowerCase() === season) &&
-                (colors.length === 0 || colors.includes(item.color.toLowerCase()) || (item.secondary_color && colors.includes(item.secondary_color.toLowerCase())))
+                (colors.length === 0 || colors.includes(item.color.toLowerCase()) || (item.secondary_color && colors.includes(item.secondary_color.toLowerCase())) || (item.tertiary_color && colors.includes(item.tertiary_color.toLowerCase())))
             );
 
             const tops = filterItems(outfits, 1);
@@ -220,6 +223,16 @@
             if (!document.getElementById('lockAccessory').checked) {
                 selectedAccessory = accessories[Math.floor(Math.random() * accessories.length)];
             }
+
+            selectedOutfit = {
+                hat_id: selectedHat ? selectedHat.id : null,
+                top_id: selectedTop ? selectedTop.id : null,
+                jacket_id: selectedJacket ? selectedJacket.id : null,
+                bottom_id: selectedBottom ? selectedBottom.id : null,
+                shoes_id: selectedShoes ? selectedShoes.id : null,
+                bag_id: selectedBag ? selectedBag.id : null,
+                accessory_id: selectedAccessory ? selectedAccessory.id : null
+            };
 
             if (selectedHat) {
                 const hatImg = document.createElement('img');
@@ -276,6 +289,24 @@
                 accessoryImg.className = 'accessory';
                 outfitDisplay.appendChild(accessoryImg);
             }
+        }
+
+        function saveOutfit() {
+            fetch('/save_outfit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(selectedOutfit)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === 'Outfit saved successfully') {
+                    alert('Outfit saved successfully!');
+                } else {
+                    alert('Failed to save outfit.');
+                }
+            });
         }
     </script>
 </body>
