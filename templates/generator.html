@@ -127,6 +127,7 @@
             <!-- Images will be placed here by JavaScript -->
         </div>
         <button onclick="randomizeOutfit()">Randomize</button>
+        <label><input type="checkbox" id="useColorGuide"> Use Color Guide</label>
         <button onclick="saveOutfit()">Save Outfit</button>
         <div class="lock-container">
             <label><input type="checkbox" id="lockHat">Lock Hat</label>
@@ -153,6 +154,22 @@
         const outfits = [];
         let selectedOutfit = {};
 
+        const colorGuide = {
+            red: ['blue', 'dark blue', 'gray', 'white', 'black'],
+            blue: ['red', 'pink', 'gray', 'white', 'black'],
+            green: ['orange', 'purple', 'white', 'black'],
+            yellow: ['green', 'gray', 'white', 'black'],
+            purple: ['green', 'white', 'black'],
+            orange: ['green', 'blue', 'white', 'black'],
+            pink: ['blue', 'dark blue', 'gray', 'white', 'black'],
+            brown: ['blue', 'gray', 'white', 'black'],
+            black: ['any'],
+            white: ['any'],
+            gray: ['red', 'blue', 'pink', 'orange', 'purple', 'green', 'white', 'black'],
+            beige: ['blue', 'green', 'brown', 'purple', 'white', 'black'],
+            navy: ['blue', 'red', 'pink', 'yellow', 'white']
+        };
+
         fetch('/outfits')
             .then(response => response.json())
             .then(data => {
@@ -173,26 +190,76 @@
             return $(selectElement).val();
         }
 
+        function getRandomColors(baseColor) {
+            const tonalColors = [baseColor];
+            const guideColors = colorGuide[baseColor.toLowerCase()] || [];
+            const complementaryColors = guideColors.filter(color => color !== 'any' && color !== 'black' && color !== 'white');
+            return { tonalColors, complementaryColors };
+        }
+
+        function filterItems(items, category) {
+            return items.filter(item => item.category === category);
+        }
+
         function randomizeOutfit() {
             const outfitDisplay = document.getElementById('outfitDisplay');
             outfitDisplay.innerHTML = '';
 
             const season = document.getElementById('season').value;
             const colors = getSelectedValues('#color');
+            const useColorGuide = document.getElementById('useColorGuide').checked;
 
-            const filterItems = (items, category) => items.filter(item =>
-                item.category === category &&
-                (season === 'any' || item.season.toLowerCase() === season) &&
-                (colors.length === 0 || colors.includes(item.color.toLowerCase()) || (item.secondary_color && colors.includes(item.secondary_color.toLowerCase())) || (item.tertiary_color && colors.includes(item.tertiary_color.toLowerCase())))
+            let filteredOutfits = outfits.filter(item =>
+                (season === 'any' || item.season.toLowerCase() === season)
             );
 
-            const tops = filterItems(outfits, 1);
-            const bottoms = filterItems(outfits, 2);
-            const shoes = filterItems(outfits, 3);
-            const hats = filterItems(outfits, 4);
-            const bags = filterItems(outfits, 5);
-            const accessories = filterItems(outfits, 6);
-            const jackets = filterItems(outfits, 7);
+            if (useColorGuide) {
+                const colorSet = new Set(colors);
+                const matchedColors = new Set();
+                const tonalOutfit = Math.random() < 0.5; // 50% chance to choose tonal or complementary colors
+
+                if (colors.length > 0) {
+                    colors.forEach(color => {
+                        const { tonalColors, complementaryColors } = getRandomColors(color);
+                        if (tonalOutfit) {
+                            tonalColors.forEach(c => matchedColors.add(c));
+                        } else {
+                            complementaryColors.forEach(c => matchedColors.add(c));
+                        }
+                    });
+                } else {
+                    // If no colors are selected, randomly pick a base color and get its guide
+                    const randomBaseColor = Object.keys(colorGuide)[Math.floor(Math.random() * Object.keys(colorGuide).length)];
+                    const { tonalColors, complementaryColors } = getRandomColors(randomBaseColor);
+                    if (tonalOutfit) {
+                        tonalColors.forEach(c => matchedColors.add(c));
+                    } else {
+                        complementaryColors.forEach(c => matchedColors.add(c));
+                    }
+                }
+
+                filteredOutfits = filteredOutfits.filter(item =>
+                    matchedColors.has(item.color.toLowerCase()) ||
+                    (item.secondary_color && matchedColors.has(item.secondary_color.toLowerCase())) ||
+                    (item.tertiary_color && matchedColors.has(item.tertiary_color.toLowerCase())) ||
+                    item.color.toLowerCase() === 'black' ||
+                    item.color.toLowerCase() === 'white'
+                );
+            } else if (colors.length > 0) {
+                filteredOutfits = filteredOutfits.filter(item =>
+                    colors.includes(item.color.toLowerCase()) ||
+                    (item.secondary_color && colors.includes(item.secondary_color.toLowerCase())) ||
+                    (item.tertiary_color && colors.includes(item.tertiary_color.toLowerCase()))
+                );
+            }
+
+            const tops = filterItems(filteredOutfits, 1);
+            const bottoms = filterItems(filteredOutfits, 2);
+            const shoes = filterItems(filteredOutfits, 3);
+            const hats = filterItems(filteredOutfits, 4);
+            const bags = filterItems(filteredOutfits, 5);
+            const accessories = filterItems(filteredOutfits, 6);
+            const jackets = filterItems(filteredOutfits, 7);
 
             console.log('Filtered tops:', tops);
             console.log('Filtered bottoms:', bottoms);
