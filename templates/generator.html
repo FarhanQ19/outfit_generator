@@ -197,171 +197,171 @@
             return { tonalColors, complementaryColors };
         }
 
-        function filterItems(items, category) {
-            return items.filter(item => item.category === category);
+        function filterItems(items, category, matchedColors) {
+            return items.filter(item =>
+                item.category === category &&
+                (matchedColors.size === 0 ||
+                 matchedColors.has(item.color.toLowerCase()) ||
+                 (item.secondary_color && matchedColors.has(item.secondary_color.toLowerCase())) ||
+                 (item.tertiary_color && matchedColors.has(item.tertiary_color.toLowerCase())))
+            );
         }
 
         function randomizeOutfit() {
-            const outfitDisplay = document.getElementById('outfitDisplay');
-            outfitDisplay.innerHTML = '';
+    const outfitDisplay = document.getElementById('outfitDisplay');
+    outfitDisplay.innerHTML = '';
 
-            const season = document.getElementById('season').value;
-            const colors = getSelectedValues('#color');
-            const useColorGuide = document.getElementById('useColorGuide').checked;
+    const season = document.getElementById('season').value;
+    const colors = getSelectedValues('#color');
+    const useColorGuide = document.getElementById('useColorGuide').checked;
 
-            let filteredOutfits = outfits.filter(item =>
-                (season === 'any' || item.season.toLowerCase() === season)
-            );
+    let filteredOutfits = outfits.filter(item =>
+        (season === 'any' || item.season.toLowerCase() === season)
+    );
 
-            if (useColorGuide) {
-                const colorSet = new Set(colors);
-                const matchedColors = new Set();
-                const tonalOutfit = Math.random() < 0.5; // 50% chance to choose tonal or complementary colors
+    if (colors.length > 0) {
+        filteredOutfits = filteredOutfits.filter(item => {
+            const itemColors = new Set([
+                item.color.toLowerCase(),
+                item.secondary_color?.toLowerCase(),
+                item.tertiary_color?.toLowerCase()
+            ].filter(Boolean));
 
-                if (colors.length > 0) {
-                    colors.forEach(color => {
-                        const { tonalColors, complementaryColors } = getRandomColors(color);
-                        if (tonalOutfit) {
-                            tonalColors.forEach(c => matchedColors.add(c));
-                        } else {
-                            complementaryColors.forEach(c => matchedColors.add(c));
-                        }
-                    });
+            return colors.some(color => itemColors.has(color.toLowerCase()));
+        });
+    }
+
+    let matchedColors = new Set();
+    if (useColorGuide) {
+        if (colors.length > 0) {
+            colors.forEach(color => {
+                const { tonalColors, complementaryColors } = getRandomColors(color);
+                if (Math.random() < 0.5) {
+                    tonalColors.forEach(c => matchedColors.add(c));
                 } else {
-                    // If no colors are selected, randomly pick a base color and get its guide
-                    const randomBaseColor = Object.keys(colorGuide)[Math.floor(Math.random() * Object.keys(colorGuide).length)];
-                    const { tonalColors, complementaryColors } = getRandomColors(randomBaseColor);
-                    if (tonalOutfit) {
-                        tonalColors.forEach(c => matchedColors.add(c));
-                    } else {
-                        complementaryColors.forEach(c => matchedColors.add(c));
-                    }
+                    complementaryColors.forEach(c => matchedColors.add(c));
                 }
-
-                filteredOutfits = filteredOutfits.filter(item =>
-                    matchedColors.has(item.color.toLowerCase()) ||
-                    (item.secondary_color && matchedColors.has(item.secondary_color.toLowerCase())) ||
-                    (item.tertiary_color && matchedColors.has(item.tertiary_color.toLowerCase())) ||
-                    item.color.toLowerCase() === 'black' ||
-                    item.color.toLowerCase() === 'white'
-                );
-            } else if (colors.length > 0) {
-                filteredOutfits = filteredOutfits.filter(item =>
-                    colors.includes(item.color.toLowerCase()) ||
-                    (item.secondary_color && colors.includes(item.secondary_color.toLowerCase())) ||
-                    (item.tertiary_color && colors.includes(item.tertiary_color.toLowerCase()))
-                );
-            }
-
-            const tops = filterItems(filteredOutfits, 1);
-            const bottoms = filterItems(filteredOutfits, 2);
-            const shoes = filterItems(filteredOutfits, 3);
-            const hats = filterItems(filteredOutfits, 4);
-            const bags = filterItems(filteredOutfits, 5);
-            const accessories = filterItems(filteredOutfits, 6);
-            const jackets = filterItems(filteredOutfits, 7);
-
-            console.log('Filtered tops:', tops);
-            console.log('Filtered bottoms:', bottoms);
-            console.log('Filtered shoes:', shoes);
-            console.log('Filtered hats:', hats);
-            console.log('Filtered bags:', bags);
-            console.log('Filtered accessories:', accessories);
-            console.log('Filtered jackets:', jackets);
-
-            if (!document.getElementById('lockTop').checked) {
-                selectedTop = tops[Math.floor(Math.random() * tops.length)];
-            }
-            if (!document.getElementById('lockBottom').checked) {
-                selectedBottom = bottoms[Math.floor(Math.random() * bottoms.length)];
-            }
-            if (!document.getElementById('lockShoes').checked) {
-                selectedShoes = shoes[Math.floor(Math.random() * shoes.length)];
-            }
-
-            selectedOutfit = {
-                hat_id: null,
-                top_id: selectedTop ? selectedTop.id : null,
-                jacket_id: null,
-                bottom_id: selectedBottom ? selectedBottom.id : null,
-                shoes_id: selectedShoes ? selectedShoes.id : null,
-                bag_id: null,
-                accessory_id: null
-            };
-
-            if (selectedTop) {
-                const topImg = document.createElement('img');
-                topImg.src = selectedTop.image_url;
-                topImg.alt = selectedTop.name;
-                topImg.className = 'top';
-                outfitDisplay.appendChild(topImg);
-            }
-
-            if (selectedBottom) {
-                const bottomImg = document.createElement('img');
-                bottomImg.src = selectedBottom.image_url;
-                bottomImg.alt = selectedBottom.name;
-                bottomImg.className = 'bottom';
-                outfitDisplay.appendChild(bottomImg);
-            }
-
-            if (selectedShoes) {
-                const shoesImg = document.createElement('img');
-                shoesImg.src = selectedShoes.image_url;
-                shoesImg.alt = selectedShoes.name;
-                shoesImg.className = 'shoes';
-                outfitDisplay.appendChild(shoesImg);
-            }
-
-            // Optionally include non-essential items
-            if (hats.length > 0 && (!document.getElementById('lockHat').checked)) {
-                selectedHat = hats[Math.floor(Math.random() * hats.length)];
-                if (selectedHat) {
-                    const hatImg = document.createElement('img');
-                    hatImg.src = selectedHat.image_url;
-                    hatImg.alt = selectedHat.name;
-                    hatImg.className = 'hat';
-                    outfitDisplay.appendChild(hatImg);
-                    selectedOutfit.hat_id = selectedHat.id;
-                }
-            }
-
-            if (bags.length > 0 && (!document.getElementById('lockBag').checked)) {
-                selectedBag = bags[Math.floor(Math.random() * bags.length)];
-                if (selectedBag) {
-                    const bagImg = document.createElement('img');
-                    bagImg.src = selectedBag.image_url;
-                    bagImg.alt = selectedBag.name;
-                    bagImg.className = 'bag';
-                    outfitDisplay.appendChild(bagImg);
-                    selectedOutfit.bag_id = selectedBag.id;
-                }
-            }
-
-            if (accessories.length > 0 && (!document.getElementById('lockAccessory').checked)) {
-                selectedAccessory = accessories[Math.floor(Math.random() * accessories.length)];
-                if (selectedAccessory) {
-                    const accessoryImg = document.createElement('img');
-                    accessoryImg.src = selectedAccessory.image_url;
-                    accessoryImg.alt = selectedAccessory.name;
-                    accessoryImg.className = 'accessory';
-                    outfitDisplay.appendChild(accessoryImg);
-                    selectedOutfit.accessory_id = selectedAccessory.id;
-                }
-            }
-
-            if (jackets.length > 0 && (!document.getElementById('lockJacket').checked)) {
-                selectedJacket = jackets[Math.floor(Math.random() * jackets.length)];
-                if (selectedJacket) {
-                    const jacketImg = document.createElement('img');
-                    jacketImg.src = selectedJacket.image_url;
-                    jacketImg.alt = selectedJacket.name;
-                    jacketImg.className = 'jacket';
-                    outfitDisplay.appendChild(jacketImg);
-                    selectedOutfit.jacket_id = selectedJacket.id;
-                }
+            });
+        } else {
+            const randomBaseColor = Object.keys(colorGuide)[Math.floor(Math.random() * Object.keys(colorGuide).length)];
+            const { tonalColors, complementaryColors } = getRandomColors(randomBaseColor);
+            if (Math.random() < 0.5) {
+                tonalColors.forEach(c => matchedColors.add(c));
+            } else {
+                complementaryColors.forEach(c => matchedColors.add(c));
             }
         }
+    }
+
+    const tops = filterItems(filteredOutfits, 1, matchedColors);
+    const bottoms = filterItems(filteredOutfits, 2, matchedColors);
+    const shoes = filterItems(filteredOutfits, 3, matchedColors);
+    const hats = filterItems(filteredOutfits, 4, matchedColors);
+    const bags = filterItems(filteredOutfits, 5, matchedColors);
+    const accessories = filterItems(filteredOutfits, 6, matchedColors);
+    const jackets = filterItems(filteredOutfits, 7, matchedColors);
+
+    console.log('Filtered tops:', tops);
+    console.log('Filtered bottoms:', bottoms);
+    console.log('Filtered shoes:', shoes);
+    console.log('Filtered hats:', hats);
+    console.log('Filtered bags:', bags);
+    console.log('Filtered accessories:', accessories);
+    console.log('Filtered jackets:', jackets);
+
+    if (!document.getElementById('lockTop').checked) {
+        selectedTop = tops[Math.floor(Math.random() * tops.length)];
+    }
+    if (!document.getElementById('lockBottom').checked) {
+        selectedBottom = bottoms[Math.floor(Math.random() * bottoms.length)];
+    }
+    if (!document.getElementById('lockShoes').checked) {
+        selectedShoes = shoes[Math.floor(Math.random() * shoes.length)];
+    }
+
+    selectedOutfit = {
+        hat_id: null,
+        top_id: selectedTop ? selectedTop.id : null,
+        jacket_id: null,
+        bottom_id: selectedBottom ? selectedBottom.id : null,
+        shoes_id: selectedShoes ? selectedShoes.id : null,
+        bag_id: null,
+        accessory_id: null
+    };
+
+    if (selectedTop) {
+        const topImg = document.createElement('img');
+        topImg.src = selectedTop.image_url;
+        topImg.alt = selectedTop.name;
+        topImg.className = 'top';
+        outfitDisplay.appendChild(topImg);
+    }
+
+    if (selectedBottom) {
+        const bottomImg = document.createElement('img');
+        bottomImg.src = selectedBottom.image_url;
+        bottomImg.alt = selectedBottom.name;
+        bottomImg.className = 'bottom';
+        outfitDisplay.appendChild(bottomImg);
+    }
+
+    if (selectedShoes) {
+        const shoesImg = document.createElement('img');
+        shoesImg.src = selectedShoes.image_url;
+        shoesImg.alt = selectedShoes.name;
+        shoesImg.className = 'shoes';
+        outfitDisplay.appendChild(shoesImg);
+    }
+
+    // Optionally include non-essential items
+    if (hats.length > 0 && (!document.getElementById('lockHat').checked)) {
+        selectedHat = hats[Math.floor(Math.random() * hats.length)];
+        if (selectedHat) {
+            const hatImg = document.createElement('img');
+            hatImg.src = selectedHat.image_url;
+            hatImg.alt = selectedHat.name;
+            hatImg.className = 'hat';
+            outfitDisplay.appendChild(hatImg);
+            selectedOutfit.hat_id = selectedHat.id;
+        }
+    }
+
+    if (bags.length > 0 && (!document.getElementById('lockBag').checked)) {
+        selectedBag = bags[Math.floor(Math.random() * bags.length)];
+        if (selectedBag) {
+            const bagImg = document.createElement('img');
+            bagImg.src = selectedBag.image_url;
+            bagImg.alt = selectedBag.name;
+            bagImg.className = 'bag';
+            outfitDisplay.appendChild(bagImg);
+            selectedOutfit.bag_id = selectedBag.id;
+        }
+    }
+
+    if (accessories.length > 0 && (!document.getElementById('lockAccessory').checked)) {
+        selectedAccessory = accessories[Math.floor(Math.random() * accessories.length)];
+        if (selectedAccessory) {
+            const accessoryImg = document.createElement('img');
+            accessoryImg.src = selectedAccessory.image_url;
+            accessoryImg.alt = selectedAccessory.name;
+            accessoryImg.className = 'accessory';
+            outfitDisplay.appendChild(accessoryImg);
+            selectedOutfit.accessory_id = selectedAccessory.id;
+        }
+    }
+
+    if (jackets.length > 0 && (!document.getElementById('lockJacket').checked)) {
+        selectedJacket = jackets[Math.floor(Math.random() * jackets.length)];
+        if (selectedJacket) {
+            const jacketImg = document.createElement('img');
+            jacketImg.src = selectedJacket.image_url;
+            jacketImg.alt = selectedJacket.name;
+            jacketImg.className = 'jacket';
+            outfitDisplay.appendChild(jacketImg);
+            selectedOutfit.jacket_id = selectedJacket.id;
+        }
+    }
+}
 
         function saveOutfit() {
             fetch('/save_outfit', {
