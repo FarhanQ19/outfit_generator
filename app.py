@@ -1,25 +1,98 @@
+import cv2
+import numpy as np
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 import os
 from werkzeug.utils import secure_filename
-from models import db, Category, Item, SavedOutfit
+from models import db, Category, Item  # Import from models.py
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///outfits.db'
 app.config['UPLOAD_FOLDER'] = 'static/images'
 db.init_app(app)
 
+
+def detect_colors(image_path):
+    # Load image
+    image = cv2.imread(image_path)
+    # Convert to RGB (OpenCV loads images in BGR format)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # Reshape the image to be a list of pixels
+    pixels = image.reshape((-1, 3))
+
+    # Convert pixels to float
+    pixels = np.float32(pixels)
+
+    # Define criteria, number of clusters(K) and apply kmeans()
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
+    k = 3  # Number of colors
+    _, labels, palette = cv2.kmeans(pixels, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+
+    # Count the number of pixels in each cluster
+    _, counts = np.unique(labels, return_counts=True)
+
+    # Get the dominant color
+    dominant = palette[np.argmax(counts)]
+
+    # Convert dominant color to hexadecimal
+    dominant_color_hex = '#%02x%02x%02x' % tuple(map(int, dominant))
+
+    # For simplicity, map the dominant color to predefined color names
+    color_map = {
+        'red': (255, 0, 0),
+        'green': (0, 255, 0),
+        'blue': (0, 0, 255),
+        'yellow': (255, 255, 0),
+        'orange': (255, 165, 0),
+        'pink': (255, 192, 203),
+        'purple': (128, 0, 128),
+        'brown': (165, 42, 42),
+        'black': (0, 0, 0),
+        'white': (255, 255, 255),
+        'gray': (128, 128, 128),
+        'beige': (245, 245, 220),
+        'navy': (0, 0, 128)
+    }
+
+    def closest_color(rgb):
+        r, g, b = rgb
+        color_diffs = []
+        for color, color_rgb in color_map.items():
+            cr, cg, cb = color_rgb
+            color_diff = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2
+            color_diffs.append((color_diff, color))
+        return min(color_diffs)[1]
+
+    primary_color = closest_color(dominant)
+
+    # Get secondary and tertiary colors (if available)
+    if len(counts) > 1:
+        secondary_color = palette[np.argsort(counts)[-2]]
+        secondary_color_hex = '#%02x%02x%02x' % tuple(map(int, secondary_color))
+        secondary_color = closest_color(secondary_color)
+    else:
+        secondary_color = 'No Secondary Color'
+
+    if len(counts) > 2:
+        tertiary_color = palette[np.argsort(counts)[-3]]
+        tertiary_color_hex = '#%02x%02x%02x' % tuple(map(int, tertiary_color))
+        tertiary_color = closest_color(tertiary_color)
+    else:
+        tertiary_color = 'No Tertiary Color'
+
+    return primary_color, secondary_color, tertiary_color
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/generator')
 def generator():
     return render_template('generator.html')
 
-@app.route('/saved_outfits')
-def saved_outfits():
-    return render_template('saved_outfits.html')
 
 @app.route('/outfits', methods=['GET'])
 def get_outfits():
@@ -36,6 +109,7 @@ def get_outfits():
         'season': item.season,
         'image_url': item.image_url
     } for item in items])
+
 
 @app.route('/add_sample_data', methods=['GET'])
 def add_sample_data():
@@ -57,6 +131,7 @@ def add_sample_data():
 
     return "Sample data added!"
 
+
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'photo' not in request.files:
@@ -67,29 +142,27 @@ def upload():
 
     name = request.form.get('name')
     brand = request.form.get('brand')
-    color = request.form.get('color')
-    secondary_color = request.form.get('secondaryColor')
-    if secondary_color == 'No Secondary Color':
-        secondary_color = None
-    tertiary_color = request.form.get('tertiaryColor')
-    if tertiary_color == 'No Tertiary Color':
-        tertiary_color = None
     style = request.form.get('style')
     season = request.form.get('season')
     category_id = request.form.get('category')
 
-    if file and name and brand and color and style and season and category_id:
+    if file and name and brand and style and season and category_id:
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         image_url = f"/static/images/{filename}"
 
-        new_item = Item(name=name, brand=brand, color=color, secondary_color=secondary_color, tertiary_color=tertiary_color, style=style, season=season, category_id=category_id, image_url=image_url)
+        primary_color, secondary_color, tertiary_color = detect_colors(filepath)
+
+        new_item = Item(name=name, brand=brand, color=primary_color, secondary_color=secondary_color,
+                        tertiary_color=tertiary_color, style=style, season=season, category_id=category_id,
+                        image_url=image_url)
         db.session.add(new_item)
         db.session.commit()
 
         return jsonify({'image_url': image_url})
     return "Failed to upload", 400
+
 
 @app.route('/delete_item/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
@@ -99,6 +172,7 @@ def delete_item(item_id):
         db.session.commit()
         return jsonify({'message': 'Item deleted successfully'})
     return jsonify({'message': 'Item not found'}), 404
+
 
 @app.route('/edit_item/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
@@ -110,9 +184,9 @@ def edit_item(item_id):
     brand = request.form.get('brand')
     color = request.form.get('color')
     secondary_color = request.form.get('secondaryColor')
+    tertiary_color = request.form.get('tertiaryColor')
     if secondary_color == 'No Secondary Color':
         secondary_color = None
-    tertiary_color = request.form.get('tertiaryColor')
     if tertiary_color == 'No Tertiary Color':
         tertiary_color = None
     style = request.form.get('style')
@@ -133,6 +207,7 @@ def edit_item(item_id):
         return jsonify({'message': 'Item updated successfully'})
     return jsonify({'message': 'Failed to update item'}), 400
 
+
 @app.route('/view_items', methods=['GET'])
 def view_items():
     items = Item.query.all()
@@ -149,50 +224,8 @@ def view_items():
         'image_url': item.image_url
     } for item in items])
 
-@app.route('/save_outfit', methods=['POST'])
-def save_outfit():
-    data = request.json
-    saved_outfit = SavedOutfit(
-        hat_id=data.get('hat_id'),
-        top_id=data.get('top_id'),
-        jacket_id=data.get('jacket_id'),
-        bottom_id=data.get('bottom_id'),
-        shoes_id=data.get('shoes_id'),
-        bag_id=data.get('bag_id'),
-        accessory_id=data.get('accessory_id')
-    )
-    db.session.add(saved_outfit)
-    db.session.commit()
-    return jsonify({'message': 'Outfit saved successfully'})
 
-@app.route('/get_saved_outfits', methods=['GET'])
-def get_saved_outfits():
-    saved_outfits = SavedOutfit.query.all()
-    return jsonify([{
-        'id': outfit.id,
-        'hat': outfit.hat.image_url if outfit.hat else None,
-        'top': outfit.top.image_url if outfit.top else None,
-        'jacket': outfit.jacket.image_url if outfit.jacket else None,
-        'bottom': outfit.bottom.image_url if outfit.bottom else None,
-        'shoes': outfit.shoes.image_url if outfit.shoes else None,
-        'bag': outfit.bag.image_url if outfit.bag else None,
-        'accessory': outfit.accessory.image_url if outfit.accessory else None
-    } for outfit in saved_outfits])
-
-# Add this route to delete a saved outfit
-@app.route('/delete_saved_outfit/<int:outfit_id>', methods=['DELETE'])
-def delete_saved_outfit(outfit_id):
-    saved_outfit = SavedOutfit.query.get(outfit_id)
-    if saved_outfit:
-        db.session.delete(saved_outfit)
-        db.session.commit()
-        return jsonify({'message': 'Saved outfit deleted successfully'})
-    return jsonify({'message': 'Saved outfit not found'}), 404
-
-# Ensure this route is added in your app.py
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
-
