@@ -4,6 +4,9 @@ from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 import os
 from werkzeug.utils import secure_filename
+from skimage import io
+from skimage.color import rgb2lab, lab2rgb
+from sklearn.cluster import KMeans
 from models import db, Category, Item  # Import from models.py
 
 app = Flask(__name__)
@@ -11,78 +14,59 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///outfits.db'
 app.config['UPLOAD_FOLDER'] = 'static/images'
 db.init_app(app)
 
+# Define the color map
+color_map = {
+    'red': (255, 0, 0),
+    'green': (0, 255, 0),
+    'blue': (0, 0, 255),
+    'yellow': (255, 255, 0),
+    'orange': (255, 165, 0),
+    'pink': (255, 192, 203),
+    'purple': (128, 0, 128),
+    'brown': (165, 42, 42),
+    'black': (0, 0, 0),
+    'white': (255, 255, 255),
+    'gray': (128, 128, 128),
+    'beige': (245, 245, 220),
+    'navy': (0, 0, 128)
+}
+
+def closest_color(rgb):
+    r, g, b = rgb
+    color_diffs = []
+    for color, color_rgb in color_map.items():
+        cr, cg, cb = color_rgb
+        color_diff = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2
+        color_diffs.append((color_diff, color))
+    return min(color_diffs)[1]
 
 def detect_colors(image_path):
-    # Load image
-    image = cv2.imread(image_path)
-    # Convert to RGB (OpenCV loads images in BGR format)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = io.imread(image_path)
+    image = image[:, :, :3]  # Ignore alpha channel if it exists
 
-    # Reshape the image to be a list of pixels
-    pixels = image.reshape((-1, 3))
+    # Convert image to LAB color space
+    image_lab = rgb2lab(image)
 
-    # Convert pixels to float
-    pixels = np.float32(pixels)
+    # Reshape the image to a 2D array of LAB values
+    pixels = image_lab.reshape((-1, 3))
 
-    # Define criteria, number of clusters(K) and apply kmeans()
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
-    k = 3  # Number of colors
-    _, labels, palette = cv2.kmeans(pixels, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    # Define number of clusters
+    n_colors = 3
 
-    # Count the number of pixels in each cluster
-    _, counts = np.unique(labels, return_counts=True)
+    # Use k-means to find clusters of colors
+    kmeans = KMeans(n_clusters=n_colors, random_state=0).fit(pixels)
+    cluster_centers = kmeans.cluster_centers_
 
-    # Get the dominant color
-    dominant = palette[np.argmax(counts)]
+    # Convert LAB clusters to RGB
+    cluster_centers_rgb = lab2rgb(cluster_centers[np.newaxis, :, :])[0] * 255
+    cluster_centers_rgb = cluster_centers_rgb.astype(int)
 
-    # Convert dominant color to hexadecimal
-    dominant_color_hex = '#%02x%02x%02x' % tuple(map(int, dominant))
-
-    # For simplicity, map the dominant color to predefined color names
-    color_map = {
-        'red': (255, 0, 0),
-        'green': (0, 255, 0),
-        'blue': (0, 0, 255),
-        'yellow': (255, 255, 0),
-        'orange': (255, 165, 0),
-        'pink': (255, 192, 203),
-        'purple': (128, 0, 128),
-        'brown': (165, 42, 42),
-        'black': (0, 0, 0),
-        'white': (255, 255, 255),
-        'gray': (128, 128, 128),
-        'beige': (245, 245, 220),
-        'navy': (0, 0, 128)
-    }
-
-    def closest_color(rgb):
-        r, g, b = rgb
-        color_diffs = []
-        for color, color_rgb in color_map.items():
-            cr, cg, cb = color_rgb
-            color_diff = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2
-            color_diffs.append((color_diff, color))
-        return min(color_diffs)[1]
-
-    primary_color = closest_color(dominant)
-
-    # Get secondary and tertiary colors (if available)
-    if len(counts) > 1:
-        secondary_color = palette[np.argsort(counts)[-2]]
-        secondary_color_hex = '#%02x%02x%02x' % tuple(map(int, secondary_color))
-        secondary_color = closest_color(secondary_color)
-    else:
-        secondary_color = 'No Secondary Color'
-
-    if len(counts) > 2:
-        tertiary_color = palette[np.argsort(counts)[-3]]
-        tertiary_color_hex = '#%02x%02x%02x' % tuple(map(int, tertiary_color))
-        tertiary_color = closest_color(tertiary_color)
-    else:
-        tertiary_color = 'No Tertiary Color'
+    # Get the closest named colors
+    primary_color = closest_color(cluster_centers_rgb[0])
+    secondary_color = closest_color(cluster_centers_rgb[1]) if n_colors > 1 else 'No Secondary Color'
+    tertiary_color = closest_color(cluster_centers_rgb[2]) if n_colors > 2 else 'No Tertiary Color'
 
     return primary_color, secondary_color, tertiary_color
-
 
 @app.route('/')
 def index():
@@ -146,6 +130,10 @@ def upload():
     season = request.form.get('season')
     category_id = request.form.get('category')
 
+    manual_primary_color = request.form.get('primaryColor')
+    manual_secondary_color = request.form.get('secondaryColor')
+    manual_tertiary_color = request.form.get('tertiaryColor')
+
     if file and name and brand and style and season and category_id:
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -154,9 +142,12 @@ def upload():
 
         primary_color, secondary_color, tertiary_color = detect_colors(filepath)
 
-        new_item = Item(name=name, brand=brand, color=primary_color, secondary_color=secondary_color,
-                        tertiary_color=tertiary_color, style=style, season=season, category_id=category_id,
-                        image_url=image_url)
+        # Use manual colors if provided
+        primary_color = manual_primary_color or primary_color
+        secondary_color = manual_secondary_color or secondary_color
+        tertiary_color = manual_tertiary_color or tertiary_color
+
+        new_item = Item(name=name, brand=brand, color=primary_color, secondary_color=secondary_color, tertiary_color=tertiary_color, style=style, season=season, category_id=category_id, image_url=image_url)
         db.session.add(new_item)
         db.session.commit()
 

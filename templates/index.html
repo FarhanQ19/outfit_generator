@@ -155,6 +155,7 @@
         <h1>Outfit Generator</h1>
         <div class="nav-buttons">
             <a href="/generator">Go to Outfit Generator</a>
+            <a href="/saved_outfits">Saved Outfits</a>
             <a href="/view_items">View All Items</a>
         </div>
     </header>
@@ -176,17 +177,6 @@
             <select id="brand" name="brand" required>
                 <option value="">Select Brand</option>
             </select>
-            <select id="color" name="color" required>
-                <option value="">Select Color</option>
-            </select>
-            <select id="secondaryColor" name="secondaryColor">
-                <option value="">No Secondary Color</option>
-                <!-- Options for secondary color will be populated dynamically -->
-            </select>
-            <select id="tertiaryColor" name="tertiaryColor">
-                <option value="">No Tertiary Color</option>
-                <!-- Options for tertiary color will be populated dynamically -->
-            </select>
             <select id="style" name="style" required>
                 <option value="">Select Style</option>
             </select>
@@ -197,6 +187,15 @@
                 <option value="Spring">Spring</option>
                 <option value="Fall">Fall</option>
                 <option value="All">All</option>
+            </select>
+            <select id="primaryColor" name="primaryColor">
+                <option value="">No Primary Color</option>
+            </select>
+            <select id="secondaryColor" name="secondaryColor">
+                <option value="">No Secondary Color</option>
+            </select>
+            <select id="tertiaryColor" name="tertiaryColor">
+                <option value="">No Tertiary Color</option>
             </select>
             <input type="file" name="photo" required>
             <input type="submit" value="Upload">
@@ -251,26 +250,26 @@
 
     <script>
         const categoryToNames = {
-            1: ["T-Shirt", "Long Sleeve", "Hoodie", "Tank Top", "Crewneck", "Buttonup", "Flannel","Zip-up", "Other"],
-            2: ["Shorts", "Cargos", "Carpenter", "Jeans", "Sweatpants", "Track Pants", "Other"],
-            3: ["Lowtops", "Hightops", "Boots", "Sandals", "Loafers", "Other"],
-            4: ["Cap", "Beanie", "Hat", "Other"],
-            5: ["Crossbody", "Backpack", "Sling", "Tote", "Other"],
-            6: ["Watch", "Necklace", "Bracelet", "Keychain", "Sunglasses", "Rings", "Other"],
-            7: ["Windbreaker", "Puffer", "Vest", "Denim", "Carpenter", "Varsity", "Sports", "Rain", "Other"]
+            1: ["Buttonup", "Crewneck", "Flannel", "Hoodie", "Long Sleeve", "Other", "T-Shirt", "Tank Top", "Zip-up"],
+            2: ["Carpenter", "Cargos", "Jeans", "Other", "Shorts", "Sweatpants", "Track Pants"],
+            3: ["Boots", "Hightops", "Lowtops", "Other", "Sandals", "Loafers"],
+            4: ["Beanie", "Cap", "Hat", "Other"],
+            5: ["Backpack", "Crossbody", "Other", "Sling", "Tote"],
+            6: ["Bracelet", "Earrings", "Keychain", "Necklace", "Other", "Rings", "Sunglasses", "Watch"],
+            7: ["Carpenter", "Denim", "Other", "Puffer", "Rain", "Sports", "Varsity", "Vest", "Windbreaker"]
         };
 
         const categoryToBrands = {
-            1: ["H&M", "Zara", "Uniqlo", "Nike", "Levi's", "Adidas", "Champion","Gap","Abercrombie & Fitch", "Coach", "Lefties", "Other"],
-            2: ["Levi's", "Gap", "Adidas", "Under Armour", "LCKR", "Uniqlo", "H&M", "Abercrombie & Fitch","North Face", "Nike", "Coach","Guess", "Other" ],
-            3: ["Nike", "Adidas", "Jordan", "New Balance", "Yeezy", "Other"],
-            4: ["New Era", "Nike", "Adidas", "Puma", "Champion", "Other"],
-            5: ["Uniqlo", "Nike", "Coach", "Lululemon", "Other"],
-            6: ["Casio", "Shein", "Coach", "Gucci", "Guess", "Nike", "Other"],
-            7: ["North Face", "Columbia", "Patagonia", "H&M", "Zara", "LCKR", "Coach", "Dickies", "Champion", "Nike", "Adidas", "Starter", "Geox"]
+            1: ["Abercrombie & Fitch", "Adidas", "Champion", "Coach", "Gap", "H&M", "Levi's", "Lefties", "Nike", "Other", "Uniqlo", "Zara"],
+            2: ["Abercrombie & Fitch", "Adidas", "Coach", "Gap", "Guess", "H&M", "LCKR", "Levi's", "Nike", "North Face", "Other", "Uniqlo", "Under Armour"],
+            3: ["Adidas", "Jordan", "New Balance", "Nike", "Other", "Puma", "Reebok", "Yeezy"],
+            4: ["Adidas", "Champion", "New Era", "Nike", "Other", "Puma"],
+            5: ["Coach", "Lululemon", "Nike", "Other", "Uniqlo"],
+            6: ["Casio", "Coach", "Gucci", "Guess", "Nike", "Other", "Pandora", "Rolex", "Shein", "Tiffany"],
+            7: ["Adidas", "Champion", "Columbia", "Dickies", "Geox", "H&M", "LCKR", "Nike", "North Face", "Other", "Patagonia", "Starter", "Zara"]
         };
 
-        const colors = ["Red", "Blue", "Green", "Black", "White", "Yellow", "Pink", "Purple", "Orange", "Brown", "Gray", "Beige"];
+        const colors = ["Red", "Blue", "Green", "Black", "White", "Yellow", "Pink", "Purple", "Orange", "Brown", "Gray", "Beige", "Navy"];
         const styles = ["Casual", "Formal", "Sport", "Party", "Business"];
 
         document.getElementById('category').addEventListener('change', function() {
@@ -291,7 +290,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            updateOptions('color', colors);
+            updateOptions('primaryColor', colors);
             updateOptions('secondaryColor', colors.concat(['No Secondary Color']));
             updateOptions('tertiaryColor', colors.concat(['No Tertiary Color']));
             updateOptions('style', styles);
@@ -409,4 +408,3 @@
     </script>
 </body>
 </html>
-
